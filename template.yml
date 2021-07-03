@@ -15,6 +15,7 @@ Resources:
         - AWSLambdaBasicExecutionRole
         - AWSLambda_ReadOnlyAccess
         - AWSXrayWriteOnlyAccess
+        - AmazonECS_FullAccess
       Tracing: Active
       Layers:
         - !Ref libs

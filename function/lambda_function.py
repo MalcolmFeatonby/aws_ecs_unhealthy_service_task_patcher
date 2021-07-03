@@ -32,7 +32,7 @@ total_unhealth_tasks_identified = 0
 
 def unstick_blocked_task(clusterARN, taskARN, timeRunningInSeconds):
 
-    print('Unsticking blocked Task [' + taskARN + ']')
+    logger.warn('Unsticking blocked Task [' + taskARN + ']')
     response = ecsClient.stop_task(
             cluster=clusterARN, 
             task=taskARN, 
@@ -41,7 +41,7 @@ def unstick_blocked_task(clusterARN, taskARN, timeRunningInSeconds):
     requestId = response['ResponseMetadata']['RequestId']
     responseCode = response['ResponseMetadata']['HTTPStatusCode']
 
-    print('Task [' + taskARN + '] stopped. (RequestId=' + requestId + ', ResponseCode=' + str(responseCode) +')')
+    logger.warn('Task [' + taskARN + '] stopped. (RequestId=' + requestId + ', ResponseCode=' + str(responseCode) +')')
 
     return 1 if responseCode == 200 else 0
 
@@ -64,17 +64,17 @@ def handle_tasks(clusterARN, serviceARN):
 
       rightNow =  datetime.now(pytz.utc)
       timeRunningInSeconds = (rightNow - taskStartedAt.astimezone(pytz.utc)).total_seconds()
-      print('Task [' + taskARN + ' is [' + taskHealth + '] and in state [' + taskLastState + '] since [' + taskStartedAt.strftime("%Y-%m-%d %H:%M:%S") + '] Age in seconds (' + str(timeRunningInSeconds) + ')')
+      logger.debug('Task [' + taskARN + ' is [' + taskHealth + '] and in state [' + taskLastState + '] since [' + taskStartedAt.strftime("%Y-%m-%d %H:%M:%S") + '] Age in seconds (' + str(timeRunningInSeconds) + ')')
 
       if ('UNKNOWN' == taskHealth and timeRunningInSeconds > (AGE_OF_TASKS_TO_CONSIDER_IN_MINUTES * 60)):
           total_unhealth_tasks_identified += 1
           if (total_tasks_to_stopped_this_run < MAX_TASKS_STOPPED_PER_RUN):
             total_tasks_to_stopped_this_run += unstick_blocked_task(clusterARN, taskARN, timeRunningInSeconds)
           else:
-            print('Task [' +taskARN +'] is unhealthy but max tasks per run exceeded.')      
+            logger.debug('Task [' +taskARN +'] is unhealthy but max tasks per run exceeded.')      
 
     else:
-      print('Task [' + taskARN + ' is not yet running.') 
+      logger.debug('Task [' + taskARN + ' is not yet running.') 
 
   return
 
@@ -97,10 +97,10 @@ def handle_services(clusterARN):
 
     ## Services running tasks with active health checks are candidates for remedial action for UNKNOWN health status.
     if hasActiveHealthCheck:
-      print('-> Looking for tasks in service [' + serviceARN + ']')
+      logger.info('-> Looking for tasks in service [' + serviceARN + ']')
       handle_tasks(clusterARN, serviceARN)
     else:
-      print(' -> No active health checks for service [' + serviceARN + ']')
+      logger.info(' -> No active health checks for service [' + serviceARN + ']')
 
   return
 
@@ -109,16 +109,16 @@ def lambda_handler(event, context):
     logger.info('## ENVIRONMENT VARIABLES\r' + jsonpickle.encode(dict(**os.environ)))
     response = client.get_account_settings()
 
-    print('--Starting workflow-->')
+    logger.info('--Starting workflow-->')
 
     clusters = ecsClient.list_clusters()
 
     ## Get a list of all of the clusters for this account
 
     for clusterARN in clusters['clusterArns']:
-      print('-> CLUSTERS [' + clusterARN + ']')
+      logger.info('-> Looking for Services in cluster  [' + clusterARN + ']')
       handle_services(clusterARN)
 
-    print('--Execution completed successfully. [' + str(total_tasks_to_stopped_this_run) + '] tasks stopped, [' + str(total_unhealth_tasks_identified) + '] potentially unhealthy tasks identified.' )
+    logger.info('Execution completed successfully. [' + str(total_tasks_to_stopped_this_run) + '] tasks stopped, [' + str(total_unhealth_tasks_identified) + '] potentially unhealthy tasks identified.' )
 
     return "Success" 
