@@ -23,6 +23,19 @@ Three configuration properties are provided in the code:
 * MAX_TASKS_STOPPED_PER_RUN - the maximum number of tasks that may be stopped in any one iteration of this function. If set to zero (the default) the function will run in "toothless" mode and simply report on the number of Tasks that are considered eligible for termination based on the termination criteria.
 * FUZZ_FACTOR - introduces some randomness as to whether to stop a task or not. Lower fuzz factor reduces the likelihood of a Task identified as suspect being stopped. This spreads the tasks that are stopped across a wider set of clusters and makes the algorithm less aggressive. The process honors the MAX_TASKS_STOPPED_PER_RUN which will never be exceeded regardless of FUZZ_FACTOR. FUZZ_FACTOR is a whole integer between 0 and 100 where 100 means stop 100% of identified tasks to the maximum allowed and 0 would mean stop no tasks.
 
+## Usage
+
+Function can be tested, built, deployed and validated using the scripts in this package:
+
+* 0-run-tests.sh - runs tests locally. It will use your locally configued AWS credentials.
+* 1-create-bucket.sh - creates an S3 bucket for deployment. Leverages your local AWS credentials to do that.
+* 2-build-layer.sh - builds the function layers and packages for deployment
+* 3-deploy.sh - pushes the build to s3 and deploys using a CFN stack
+* 4-invoke.sh - invokes the Lambda function
+* 5-cleanup.sh - cleans up and tearsdown the function and all artifacts created
+
+When running or testing you can see the log output in a log group entitled /aws/lambda/aws-ecs-sample-task-unsticker-function-<some random string>.
+
 ## Caveates  
 
 * The default configuration for this function is reporting only. It will not take distructive action.
