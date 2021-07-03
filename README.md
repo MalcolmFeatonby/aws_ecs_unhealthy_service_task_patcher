@@ -17,10 +17,11 @@ Tasks are only considered for termination if:
 
 ## Configuration
 
-Two configuration properties are provided in the code:
+Three configuration properties are provided in the code:
 
 * AGE_OF_TASKS_TO_CONSIDER_IN_MINUTES - the age in minutes since the task transitioned to RUNNING state. Tasks with an age greater than this value will be checked for health status.
 * MAX_TASKS_STOPPED_PER_RUN - the maximum number of tasks that may be stopped in any one iteration of this function. If set to zero (the default) the function will run in "toothless" mode and simply report on the number of Tasks that are considered eligible for termination based on the termination criteria.
+* FUZZ_FACTOR - introduces some randomness as to whether to stop a task or not. Lower fuzz factor reduces the likelihood of a Task identified as suspect being stopped. This spreads the tasks that are stopped across a wider set of clusters and makes the algorithm less aggressive. The process honors the MAX_TASKS_STOPPED_PER_RUN which will never be exceeded regardless of FUZZ_FACTOR. FUZZ_FACTOR is a whole integer between 0 and 100 where 100 means stop 100% of identified tasks to the maximum allowed and 0 would mean stop no tasks.
 
 ## Caveates  
 

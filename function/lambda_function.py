@@ -5,8 +5,10 @@ import boto3
 from datetime import datetime
 import pytz
 
-logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('task_unsticker')
+logger.setLevel(logging.DEBUG)
+
 
 ecsClient = boto3.client('ecs')
 client = boto3.client('lambda')
@@ -26,6 +28,12 @@ MAX_TASKS_STOPPED_PER_RUN = 0
 # for remedial action. Set to 25 hours. 
 # 
 AGE_OF_TASKS_TO_CONSIDER_IN_MINUTES = 1500
+
+#
+# Fuzz factor - used to spread the tasks that are acted on over a wider set of clusters
+# At 100% the first MAX_TASKS_STOPPED_PER_RUN will be stopped.
+#
+FUZZ_FACTOR = 20
 
 total_tasks_to_stopped_this_run = 0
 total_unhealth_tasks_identified = 0
@@ -70,7 +78,10 @@ def handle_tasks(clusterARN, serviceARN):
           logger.info('Task [' +taskARN +'] is unhealthy and meets the criteria for a restart.')      
           total_unhealth_tasks_identified += 1
           if (total_tasks_to_stopped_this_run < MAX_TASKS_STOPPED_PER_RUN):
-            total_tasks_to_stopped_this_run += unstick_blocked_task(clusterARN, taskARN, timeRunningInSeconds)
+              if (FUZZ_FACTOR > random.randint(0,100)):
+                total_tasks_to_stopped_this_run += unstick_blocked_task(clusterARN, taskARN, timeRunningInSeconds)
+              else:
+                logger.info('Passed on Task  [' +taskARN +'] due to fuzzing.')
           else:
             logger.debug('Task [' +taskARN +'] is unhealthy but max tasks per run exceeded.')      
 

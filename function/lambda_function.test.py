@@ -4,8 +4,9 @@ import logging
 import jsonpickle
 import json
 
-logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('function_test')
+logger.setLevel(logging.DEBUG)
 
 #function = importlib.import_module(lambda_function)
 
