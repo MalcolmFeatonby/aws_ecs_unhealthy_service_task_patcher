@@ -1,6 +1,6 @@
 #!/bin/bash
 set -eo pipefail
-STACK=aws_ecs_unhealthy_service_task_patcher
+STACK=aws-ecs-sample-task-unsticker
 if [[ $# -eq 1 ]] ; then
     STACK=$1
     echo "Deleting stack $STACK"
