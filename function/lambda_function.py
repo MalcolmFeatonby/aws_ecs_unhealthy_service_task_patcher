@@ -4,6 +4,7 @@ import jsonpickle
 import boto3
 from datetime import datetime
 import pytz
+import random
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('task_unsticker')
@@ -27,13 +28,13 @@ MAX_TASKS_STOPPED_PER_RUN = 0
 # Maximum time in minutes that tasks must be running before they will be considered
 # for remedial action. Set to 25 hours. 
 # 
-AGE_OF_TASKS_TO_CONSIDER_IN_MINUTES = 1500
+AGE_OF_TASKS_TO_CONSIDER_IN_MINUTES = 1500 
 
 #
 # Fuzz factor - used to spread the tasks that are acted on over a wider set of clusters
 # At 100% the first MAX_TASKS_STOPPED_PER_RUN will be stopped.
 #
-FUZZ_FACTOR = 20
+FUZZ_FACTOR = 5 
 
 total_tasks_to_stopped_this_run = 0
 total_unhealth_tasks_identified = 0
