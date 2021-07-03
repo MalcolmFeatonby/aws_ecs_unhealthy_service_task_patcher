@@ -5,6 +5,8 @@ import jsonpickle
 import json
 
 logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO)
+
 #function = importlib.import_module(lambda_function)
 
 function = __import__('lambda_function')

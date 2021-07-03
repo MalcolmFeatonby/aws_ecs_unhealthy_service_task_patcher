@@ -6,7 +6,7 @@ from datetime import datetime
 import pytz
 
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 ecsClient = boto3.client('ecs')
 client = boto3.client('lambda')
@@ -32,7 +32,7 @@ total_unhealth_tasks_identified = 0
 
 def unstick_blocked_task(clusterARN, taskARN, timeRunningInSeconds):
 
-    logger.warn('Unsticking blocked Task [' + taskARN + ']')
+    logger.warning('Unsticking blocked Task [' + taskARN + ']')
     response = ecsClient.stop_task(
             cluster=clusterARN, 
             task=taskARN, 
@@ -41,7 +41,7 @@ def unstick_blocked_task(clusterARN, taskARN, timeRunningInSeconds):
     requestId = response['ResponseMetadata']['RequestId']
     responseCode = response['ResponseMetadata']['HTTPStatusCode']
 
-    logger.warn('Task [' + taskARN + '] stopped. (RequestId=' + requestId + ', ResponseCode=' + str(responseCode) +')')
+    logger.warning('Task [' + taskARN + '] stopped. (RequestId=' + requestId + ', ResponseCode=' + str(responseCode) +')')
 
     return 1 if responseCode == 200 else 0
 
@@ -67,6 +67,7 @@ def handle_tasks(clusterARN, serviceARN):
       logger.debug('Task [' + taskARN + ' is [' + taskHealth + '] and in state [' + taskLastState + '] since [' + taskStartedAt.strftime("%Y-%m-%d %H:%M:%S") + '] Age in seconds (' + str(timeRunningInSeconds) + ')')
 
       if ('UNKNOWN' == taskHealth and timeRunningInSeconds > (AGE_OF_TASKS_TO_CONSIDER_IN_MINUTES * 60)):
+          logger.info('Task [' +taskARN +'] is unhealthy and meets the criteria for a restart.')      
           total_unhealth_tasks_identified += 1
           if (total_tasks_to_stopped_this_run < MAX_TASKS_STOPPED_PER_RUN):
             total_tasks_to_stopped_this_run += unstick_blocked_task(clusterARN, taskARN, timeRunningInSeconds)
@@ -83,6 +84,8 @@ def handle_services(clusterARN):
 
   services = ecsClient.list_services(cluster=clusterARN)
   for serviceARN in services['serviceArns']:
+
+    logger.info(' -> Looking for tasks in Service [' + serviceARN +']')
 
     ## Find the task definition for this service
     serviceDef = ecsClient.describe_services(cluster=clusterARN,services=[serviceARN])
